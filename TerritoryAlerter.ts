@@ -62,7 +62,7 @@ class TerritoryAlerter {
             if(isPresent) {
                 if (feature.name != this.#CurrentLocation) {
                     Chat.toast("Location Changed" as any, `Entered ${feature.name}` as any);
-                    World.playSound("entity.player.levelup", 0.1, 100);
+                    World.playSound(TERRITORY_ENTER_SOUND, 0.1, 100);
                     this.#CurrentLocation = feature.name;
                 }
                 return true;
@@ -74,7 +74,7 @@ class TerritoryAlerter {
 
         if (!isPresent && this.#CurrentLocation != undefined) {
             Chat.toast("Location Changed" as any, "LEFT TERRITORY" as any);
-            World.playSound("entity.wither.spawn", 0.1, 0.5);
+            World.playSound(TERRITORY_LEAVE_SOUND, 0.1, 0.5);
             this.#CurrentLocation = undefined;
         }
         return false;
@@ -119,16 +119,27 @@ class TerritoryAlerter {
     }
 }
 
+//////////////////////////////////////////////////////////
+/////////////// CONFIG //////////////////////////////////
+
+const TERRITORY_CLAIMS_FILENAME = "Updated Icenian Territory.json"; // Should be in same folder as script
+const TERRITORY_POLLING_INTERVAL = 5  // IN SECONDS
+const TERRITORY_DEBUG_MODE = false;   // logs debug messages to the chat
+const TERRITORY_ENTER_SOUND = "entity.player.levelup";  // sound when player entered some territory
+const TERRITORY_LEAVE_SOUND = "entity.wither.spawn";    // sound when player left entire territory 
+
+/////////////// END OF CONFIG ///////////////////////////
+/////////////////////////////////////////////////////////////
+
 function runTerritoryAlerter() {
-    let Alerter = new TerritoryAlerter("Updated Icenian Territory.json");
+    let Alerter = new TerritoryAlerter(TERRITORY_CLAIMS_FILENAME, TERRITORY_DEBUG_MODE);
 
     if (Alerter.TerritoryFeatures == undefined) {
         Chat.log("Error..." as any);
         return;
     }
 
-    let timeInterval = 5; // update location interval
-    let tickInterval = timeInterval * 20;
+    let tickInterval = TERRITORY_POLLING_INTERVAL * 20;
 
     let listener = JsMacros.on('Tick', JavaWrapper.methodToJava(() => {
         if (World.getTime() % tickInterval == 0) {
