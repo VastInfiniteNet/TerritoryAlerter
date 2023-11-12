@@ -21,14 +21,15 @@ class TerritoryAlerter {
 
     constructor(territoryJsonFileName: string, debug: boolean = false) {
         this.TerritoryJsonFileName = territoryJsonFileName;
-        this.readJson(territoryJsonFileName);
+        this.ReadJson(territoryJsonFileName);
         this.#Debug = debug;
     }
 
-    readJson(fileName: string) {
+    ReadJson(fileName: string) { // TODO: support multiple claims maps
         if (this.#Debug)
             Chat.log(`Reading in ${fileName}` as any)
         if (!FS.exists(fileName)) {
+            // TODO: download claims map if one doesn't exist
             Chat.log(`Territory file '${fileName}' does not exist! Stopping...` as any);
             return;
         }
@@ -104,12 +105,12 @@ class TerritoryAlerter {
                 point[0] < a[0] + ((point[1]-a[1])/(b[1]-a[1]))*(b[0]-a[0])) {  // point near line   
                 count++
                 if (this.#Debug)
-                    Chat.log(`\tIntersection w/: [${a}, ${b}]` as any);
+                    Chat.log(`   Intersection w/: [${a}, ${b}]` as any);
             }
         }
 
         if (this.#Debug)
-            Chat.log(`\tCount: ${count}` as any)
+            Chat.log(`   Count: ${count}` as any)
         return count % 2 == 1;
     }
 
