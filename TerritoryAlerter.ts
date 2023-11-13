@@ -63,15 +63,16 @@ class TerritoryAlerter {
                 continue;
             
             if (feature.name != this.#CurrentLocation) {
-                let message = `Entered ${feature.name}`;
-                let subtitle = `${feature.name}, ${this.TerritoryName}`;
+                let featureName = this.#Colorize(feature.name, feature.color);
+                let message = Chat.createTextBuilder().append("Entered " as any).append(featureName).build();
+                let subtitle = Chat.createTextBuilder().append(featureName).append(`, ${this.TerritoryName}` as any).build();
 
                 if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE) != 0)
-                    Chat.title(message as any, subtitle as any, 10, 35, 10);
+                    Chat.title(message, subtitle, 10, 35, 10);
                 if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST) != 0)        
-                    Chat.toast(message as any, subtitle as any);
+                    Chat.toast(message, subtitle);
                 if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.LOG) != 0)        
-                    Chat.log(`Now in ${feature.name}, ${this.TerritoryName}` as any);
+                    Chat.log(subtitle);
 
                 World.playSound(TERRITORY_ENTER_SOUND, 0.1, 100);
                 this.#CurrentLocation = feature.name;
@@ -98,6 +99,14 @@ class TerritoryAlerter {
             this.#CurrentLocation = undefined;
         }
         return false;
+    }
+
+    #Colorize(name: string, colorString: string) {
+        if (colorString === undefined)
+            return Chat.createTextBuilder().append(Chat.createTextHelperFromString(name));
+
+        let color = [parseInt(colorString.slice(1,3), 16), parseInt(colorString.slice(3,5), 16), parseInt(colorString.slice(5,7), 16)];
+        return Chat.createTextBuilder().append(name as any).withColor(...color);
     }
 
     #IsPointInFeature(point: TerritoryCoordinate, feature: TerritoryDetails): boolean {
@@ -156,6 +165,7 @@ enum TERRITORY_CHANGE_DISPLAY_OPTIONS {
     LOG =   1 << 2,
 };
 const TERRITORY_CHANGE_DISPLAY_OPTION: TERRITORY_CHANGE_DISPLAY_OPTIONS = TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST;
+// to use all set to 0xFF
 /////////////// END OF CONFIG ///////////////////////////
 /////////////////////////////////////////////////////////////
 
