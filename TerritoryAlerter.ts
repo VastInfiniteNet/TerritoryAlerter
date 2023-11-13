@@ -63,14 +63,16 @@ class TerritoryAlerter {
                 continue;
             
             if (feature.name != this.#CurrentLocation) {
-                switch(TERRITORY_CHANGE_DISPLAY_OPTION) {
-                    case TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE:
-                        Chat.title(`Entered ${feature.name}` as any, `${feature.name}, ${this.TerritoryName}` as any, 10, 30, 10);
-                        break;
-                    case TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST:
-                        Chat.toast(`Entered ${feature.name}` as any, `${feature.name}, ${this.TerritoryName}` as any);
-                        break;
-                }
+                let message = `Entered ${feature.name}`;
+                let subtitle = `${feature.name}, ${this.TerritoryName}`;
+
+                if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE) != 0)
+                    Chat.title(message as any, subtitle as any, 10, 35, 10);
+                if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST) != 0)        
+                    Chat.toast(message as any, subtitle as any);
+                if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.LOG) != 0)        
+                    Chat.log(`Now in ${feature.name}, ${this.TerritoryName}` as any);
+
                 World.playSound(TERRITORY_ENTER_SOUND, 0.1, 100);
                 this.#CurrentLocation = feature.name;
             }
@@ -81,14 +83,17 @@ class TerritoryAlerter {
             Chat.log(`IsPresent: ${isPresent}, Location: ${this.#CurrentLocation}` as any);
 
         if (!isPresent && this.#CurrentLocation != undefined) {
-            switch(TERRITORY_CHANGE_DISPLAY_OPTION) {
-                case TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE:
-                    Chat.title("NOW IN THE UNKNOWN" as any, `You have left ${this.TerritoryName}` as any, 10, 30, 10);
-                    break;
-                case TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST:
-                    Chat.toast("NOW IN THE UNKNOWN" as any, `Left ${this.TerritoryName}` as any);
-                    break;
-            }
+            let message = "NOW IN THE UNKNOWN";
+            let subtitle =  `You have left ${this.TerritoryName}`;
+            if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE) != 0)
+                Chat.title(message as any, subtitle as any, 10, 35, 10);
+            if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST) != 0)
+                Chat.toast(message as any, subtitle as any);
+            if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.LOG) != 0)
+                Chat.log(`NOW IN THE UNKNOWN, You have left ${this.TerritoryName}` as any);
+
+
+
             World.playSound(TERRITORY_LEAVE_SOUND, 0.1, 0.5);
             this.#CurrentLocation = undefined;
         }
@@ -144,12 +149,13 @@ const TERRITORY_ENTER_SOUND = "entity.player.levelup";  // sound when player ent
 const TERRITORY_LEAVE_SOUND = "entity.wither.spawn";    // sound when player left entire territory 
 
 // DISPLAY OPTIONS
+// To use multiple bitwise OR (|) an additional option to the end
 enum TERRITORY_CHANGE_DISPLAY_OPTIONS {
-    TOAST,
-    TITLE,
+    TOAST = 1 << 0,
+    TITLE = 1 << 1,
+    LOG =   1 << 2,
 };
 const TERRITORY_CHANGE_DISPLAY_OPTION: TERRITORY_CHANGE_DISPLAY_OPTIONS = TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST;
-
 /////////////// END OF CONFIG ///////////////////////////
 /////////////////////////////////////////////////////////////
 
