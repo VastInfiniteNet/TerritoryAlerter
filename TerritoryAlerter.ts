@@ -152,7 +152,7 @@ class TerritoryAlerter {
 /////////////// CONFIG //////////////////////////////////
 
 const TERRITORY_CLAIMS_FILENAME = "Updated Icenian Territory.json"; // Should be in same folder as script
-const TERRITORY_POLLING_INTERVAL = 1;  // IN SECONDS
+const TERRITORY_POLLING_INTERVAL = 4;  // IN SECONDS
 const TERRITORY_DEBUG_MODE = false;   // logs debug messages to the chat
 const TERRITORY_ENTER_SOUND = "entity.player.levelup";  // sound when player entered some territory
 const TERRITORY_LEAVE_SOUND = "entity.wither.spawn";    // sound when player left entire territory 
