@@ -14,13 +14,12 @@ interface TerritoryDetails {
 }
 
 class TerritoryAlerter {
-    TerritoryJsonFileName: string;
+    TerritoryName: string;
     TerritoryFeatures: TerritoryDetails[];
     #CurrentLocation: string;
     #Debug: boolean;
 
     constructor(territoryJsonFileName: string, debug: boolean = false) {
-        this.TerritoryJsonFileName = territoryJsonFileName;
         this.ReadJson(territoryJsonFileName);
         this.#Debug = debug;
     }
@@ -34,16 +33,15 @@ class TerritoryAlerter {
             return;
         }
         try {
-            this.TerritoryFeatures = JSON.parse(FS.open(fileName).read()).features;
+            let file = FS.open(fileName);
+            let territoryJson = JSON.parse(file.read());
+            this.TerritoryFeatures = territoryJson.features;
+            this.TerritoryName = territoryJson.name;
         }
         catch(e) {
             Chat.log(e);
             Chat.log("Error reading into territory json file name, stopping..." as any);
         }
-    }
-
-    #CleanPos(): TerritoryCoordinate {
-        return [Math.floor(Player.getPlayer().getPos().getX()), Math.floor(Player.getPlayer().getPos().getZ())];
     }
 
     Check(): boolean {
@@ -53,27 +51,44 @@ class TerritoryAlerter {
             if (this.#Debug)
                 Chat.log(`Checking ${feature.name}` as any);
 
+            let currentPos: TerritoryCoordinate = [ Math.floor(Player.getPlayer().getPos().getX()), 
+                                                    Math.floor(Player.getPlayer().getPos().getZ())];
             if (feature.polygon == undefined) { // feature is a point
-                isPresent = this.#CleanPos()[0] == feature.x && this.#CleanPos()[1] == feature.z;
-            } else {
-                isPresent = this.#IsPointInFeature(this.#CleanPos(), feature);
+                isPresent = currentPos[0] == feature.x && currentPos[1] == feature.z;
+            } else { // feature is a polygon
+                isPresent = this.#IsPointInFeature(currentPos, feature);
             }
 
-            if(isPresent) {
-                if (feature.name != this.#CurrentLocation) {
-                    Chat.toast("Location Changed" as any, `Entered ${feature.name}` as any);
-                    World.playSound(TERRITORY_ENTER_SOUND, 0.1, 100);
-                    this.#CurrentLocation = feature.name;
+            if (!isPresent)
+                continue;
+            
+            if (feature.name != this.#CurrentLocation) {
+                switch(TERRITORY_CHANGE_DISPLAY_OPTION) {
+                    case TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE:
+                        Chat.title(`Entered ${feature.name}` as any, `${feature.name}, ${this.TerritoryName}` as any, 10, 30, 10);
+                        break;
+                    case TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST:
+                        Chat.toast(`Entered ${feature.name}` as any, `${feature.name}, ${this.TerritoryName}` as any);
+                        break;
                 }
-                return true;
-            } 
+                World.playSound(TERRITORY_ENTER_SOUND, 0.1, 100);
+                this.#CurrentLocation = feature.name;
+            }
+            return true;
         }
 
         if (this.#Debug)
             Chat.log(`IsPresent: ${isPresent}, Location: ${this.#CurrentLocation}` as any);
 
         if (!isPresent && this.#CurrentLocation != undefined) {
-            Chat.toast("Location Changed" as any, "LEFT TERRITORY" as any);
+            switch(TERRITORY_CHANGE_DISPLAY_OPTION) {
+                case TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE:
+                    Chat.title("NOW IN THE UNKNOWN" as any, `You have left ${this.TerritoryName}` as any, 10, 30, 10);
+                    break;
+                case TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST:
+                    Chat.toast("NOW IN THE UNKNOWN" as any, `Left ${this.TerritoryName}` as any);
+                    break;
+            }
             World.playSound(TERRITORY_LEAVE_SOUND, 0.1, 0.5);
             this.#CurrentLocation = undefined;
         }
@@ -123,10 +138,17 @@ class TerritoryAlerter {
 /////////////// CONFIG //////////////////////////////////
 
 const TERRITORY_CLAIMS_FILENAME = "Updated Icenian Territory.json"; // Should be in same folder as script
-const TERRITORY_POLLING_INTERVAL = 5  // IN SECONDS
+const TERRITORY_POLLING_INTERVAL = 1;  // IN SECONDS
 const TERRITORY_DEBUG_MODE = false;   // logs debug messages to the chat
 const TERRITORY_ENTER_SOUND = "entity.player.levelup";  // sound when player entered some territory
 const TERRITORY_LEAVE_SOUND = "entity.wither.spawn";    // sound when player left entire territory 
+
+// DISPLAY OPTIONS
+enum TERRITORY_CHANGE_DISPLAY_OPTIONS {
+    TOAST,
+    TITLE,
+};
+const TERRITORY_CHANGE_DISPLAY_OPTION: TERRITORY_CHANGE_DISPLAY_OPTIONS = TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST;
 
 /////////////// END OF CONFIG ///////////////////////////
 /////////////////////////////////////////////////////////////
@@ -142,10 +164,8 @@ function runTerritoryAlerter() {
     let tickInterval = TERRITORY_POLLING_INTERVAL * 20;
 
     let listener = JsMacros.on('Tick', JavaWrapper.methodToJava(() => {
-        if (World.getTime() % tickInterval == 0) {
-            Chat.log(World.getTime() as any);
+        if (World.getTime() % tickInterval == 0) 
             Alerter.Check();
-        }
     }) as any);
 
     event.stopListener = JavaWrapper.methodToJava(() => {
