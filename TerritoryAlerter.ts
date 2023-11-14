@@ -152,10 +152,14 @@ class TerritoryAlerter {
 /////////////// CONFIG //////////////////////////////////
 
 const TERRITORY_CLAIMS_FILENAME = "Updated Icenian Territory.json"; // Should be in same folder as script
-const TERRITORY_POLLING_INTERVAL = 4;  // IN SECONDS
+
+// To disable continuous polling set to 0
+const TERRITORY_POLLING_INTERVAL = 5;  // IN SECONDS
 const TERRITORY_DEBUG_MODE = false;   // logs debug messages to the chat
 const TERRITORY_ENTER_SOUND = "entity.player.levelup";  // sound when player entered some territory
 const TERRITORY_LEAVE_SOUND = "entity.wither.spawn";    // sound when player left entire territory 
+const TERRITORY_HOTKEY = undefined;   // optional key to activate a territory alert check
+//"key.keyboard.left.bracket";
 
 // DISPLAY OPTIONS
 // To use multiple bitwise OR (|) an additional option to the end
@@ -170,22 +174,42 @@ const TERRITORY_CHANGE_DISPLAY_OPTION: TERRITORY_CHANGE_DISPLAY_OPTIONS = TERRIT
 /////////////////////////////////////////////////////////////
 
 function runTerritoryAlerter() {
-    let Alerter = new TerritoryAlerter(TERRITORY_CLAIMS_FILENAME, TERRITORY_DEBUG_MODE);
+    const isActive = !!GlobalVars.getBoolean("TerritoryAlerterActive");
+    if (isActive && (event as Events.Key).key !== undefined) {
+        Chat.log("TerritoryAlerter is already running!" as any);
+        return;
+    }
+    GlobalVars.putBoolean("TerritoryAlerterActive", true);
 
+    let Alerter = new TerritoryAlerter(TERRITORY_CLAIMS_FILENAME, TERRITORY_DEBUG_MODE);
     if (Alerter.TerritoryFeatures == undefined) {
         Chat.log("Error..." as any);
         return;
     }
+    Alerter.Check();
 
-    let tickInterval = TERRITORY_POLLING_INTERVAL * 20;
-
-    let listener = JsMacros.on('Tick', JavaWrapper.methodToJava(() => {
-        if (World.getTime() % tickInterval == 0) 
-            Alerter.Check();
-    }) as any);
+    let listeners = [];
+    let tickListenerInterval = TERRITORY_POLLING_INTERVAL * 20;
+    if (tickListenerInterval != 0) {
+        listeners.push(JsMacros.on('Tick', JavaWrapper.methodToJava(() => {
+            if (World.getTime() % tickListenerInterval == 0) 
+                Alerter.Check();
+        }) as any))
+    }
+    if (TERRITORY_HOTKEY !== undefined) {
+        listeners.push(JsMacros.on('Key', JavaWrapper.methodToJava((keyEvent: Events.Key) => {
+            if (keyEvent.key == TERRITORY_HOTKEY && keyEvent.action) {
+                if (TERRITORY_DEBUG_MODE)
+                    Chat.log("KEY PRESS ACTIVED CHECK" as any);
+                Alerter.Check();
+            }
+        }) as any))
+    }
 
     event.stopListener = JavaWrapper.methodToJava(() => {
-        JsMacros.off(listener);
+        listeners.forEach(listener => JsMacros.off(listener));
+        Chat.log("TerritoryAlerter disabled" as any);
+        GlobalVars.remove("TerritoryAlerterActive");
     });
 }
 
