@@ -52,13 +52,7 @@ class TerritoryAlerter {
                 let message = Chat.createTextBuilder().append("Entered ").append(featureName).build();
                 let subtitle = Chat.createTextBuilder().append(featureName).append(`, ${this.TerritoryName}`).build();
 
-                if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE) != 0)
-                    Chat.title(message, subtitle, 10, 35, 10);
-                if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST) != 0)        
-                    Chat.toast(message, subtitle);
-                if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.LOG) != 0)        
-                    Chat.log(subtitle);
-
+                this.#DisplayLocationChange(message, subtitle, null)
                 World.playSound(TERRITORY_ENTER_SOUND, 0.1, 100);
                 this.#CurrentLocation = feature.name;
             }
@@ -71,19 +65,23 @@ class TerritoryAlerter {
         if (!isPresent && this.#CurrentLocation != undefined) {
             let message = "NOW IN THE UNKNOWN";
             let subtitle =  `You have left ${this.TerritoryName}`;
-            if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE) != 0)
-                Chat.title(message, subtitle, 10, 35, 10);
-            if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST) != 0)
-                Chat.toast(message, subtitle);
-            if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.LOG) != 0)
-                Chat.log(`NOW IN THE UNKNOWN, You have left ${this.TerritoryName}`);
 
-
-
+            this.#DisplayLocationChange(message, subtitle, null)
             World.playSound(TERRITORY_LEAVE_SOUND, 0.1, 0.5);
             this.#CurrentLocation = undefined;
         }
         return false;
+    }
+
+    #DisplayLocationChange(message, subtitle) {
+        if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TITLE) != 0)
+            Chat.title(message, subtitle, 10, 35, 10);
+        if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST) != 0)        
+            Chat.toast(message, subtitle);
+        if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.LOG) != 0)        
+            Chat.log(subtitle);
+        if ((TERRITORY_CHANGE_DISPLAY_OPTION & TERRITORY_CHANGE_DISPLAY_OPTIONS.ACTIONBAR) != 0)        
+            Chat.actionbar(subtitle);
     }
 
     #Colorize(name, colorString) {
@@ -152,6 +150,7 @@ const TERRITORY_CHANGE_DISPLAY_OPTIONS = {
     TOAST: 1 << 0,
     TITLE: 1 << 1,
     LOG:   1 << 2,
+    ACTIONBAR: 1 << 3,
 };
 const TERRITORY_CHANGE_DISPLAY_OPTION = TERRITORY_CHANGE_DISPLAY_OPTIONS.TOAST;
 // to use all set to 0xFF
