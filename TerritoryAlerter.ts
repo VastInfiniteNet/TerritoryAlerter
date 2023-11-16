@@ -11,6 +11,7 @@ interface TerritoryDetails {
     nation: string;
     website: string;
     color: string;
+    eventHandler: Events.Custom;
 }
 
 class TerritoryAlerter {
@@ -44,6 +45,14 @@ class TerritoryAlerter {
         }
     }
 
+    Setup() {
+        for (let i = 0; i < this.TerritoryFeatures.length; i++) {
+            let event = JsMacros.createCustomEvent(`${this.TerritoryFeatures[i].name}-eventHandler`);
+            event.registerEvent();
+            this.TerritoryFeatures[i].eventHandler = event;
+        }
+    }
+
     Check(): boolean {
         var isPresent: boolean;
 
@@ -70,6 +79,8 @@ class TerritoryAlerter {
                 this.#DisplayLocationChange(message, subtitle);
                 World.playSound(TERRITORY_ENTER_SOUND, 0.1, 100);
                 this.#CurrentLocation = feature.name;
+                if (feature.eventHandler !== undefined)
+                    feature.eventHandler.trigger();
             }
             return true;
         }
