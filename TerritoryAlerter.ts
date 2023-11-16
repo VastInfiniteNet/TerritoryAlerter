@@ -38,6 +38,7 @@ class TerritoryAlerter {
             let territoryJson = JSON.parse(file.read());
             this.TerritoryFeatures = territoryJson.features;
             this.TerritoryName = territoryJson.name;
+            this.Setup();
         }
         catch(e) {
             Chat.log(e);
