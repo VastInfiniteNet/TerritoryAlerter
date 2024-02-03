@@ -1,3 +1,5 @@
+# [PLEASE SEE SUCCESSOR PROJECT HERE](https://github.com/VastInfiniteNet/Herm)
+
 # TerritoryAlerter
 Alerts the player when they move between states or entirely out of some claims. CivMC.
 
